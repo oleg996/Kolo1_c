@@ -4,10 +4,10 @@ namespace Kolo.Model;
 
 public class Customer
 {
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
+   required public string FirstName { get; set; }
+   required public string LastName { get; set; }
 
-    public DateTime dateOfBirth{ get; set; }
+   required public DateTime dateOfBirth{ get; set; }
 
 
 }

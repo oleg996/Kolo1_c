@@ -77,8 +77,7 @@ public class DbService : IDbService
         await using SqlCommand command = new SqlCommand("select first_name ,last_name ,date_of_birth  from Customer c  where c.customer_id = (select customer_id  from Delivery where delivery_id  = @id)", connection);
 
 
-        Customer c = new Customer();
-
+        
         command.Parameters.Add("@id", SqlDbType.Int).Value = id;
 
         await connection.OpenAsync();
@@ -87,11 +86,19 @@ public class DbService : IDbService
         {
             while (await reader.ReadAsync())
             {
-                c.FirstName = reader.GetString(0);
 
-                c.LastName = reader.GetString(1);
+                Customer c = new Customer()
+                {
+                    FirstName = reader.GetString(0),
+                    LastName = reader.GetString(1),
 
-                c.dateOfBirth = reader.GetDateTime(2);
+                    dateOfBirth = reader.GetDateTime(2)
+
+                };
+
+
+
+                
 
                 return c;
             }
@@ -99,7 +106,7 @@ public class DbService : IDbService
 
 
 
-        return c;
+        return null;
 
 
     }
@@ -138,7 +145,7 @@ public class DbService : IDbService
 
 
     }
-    
+
     public async Task<List<Product>> get_products(int id)
     {
         List<Product> products = new List<Product>();
@@ -147,7 +154,7 @@ public class DbService : IDbService
         await using SqlCommand command = new SqlCommand("select name,price ,amount  from Product p , Product_Delivery pd  where p.product_id  = pd.product_id and pd.delivery_id  = @id", connection);
 
 
-        
+
 
         command.Parameters.Add("@id", SqlDbType.Int).Value = id;
 
@@ -171,6 +178,134 @@ public class DbService : IDbService
 
 
         return products;
+
+
+    }
+
+
+    public async Task<Boolean> does_cus_exists(int id)
+    {
+
+        await using SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default"));
+        await using SqlCommand command = new SqlCommand("select count(*) from Customer where customer_id  = @id", connection);
+
+
+        command.Parameters.Add("@id", SqlDbType.Int).Value = id;
+
+        await connection.OpenAsync();
+
+        using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) == 1)
+                    return true;
+
+
+            }
+        }
+
+
+
+        return false;
+
+    }
+
+    public async Task<Boolean> does_driv_exists(string lic)
+    {
+
+        await using SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default"));
+        await using SqlCommand command = new SqlCommand("select count(*) from Driver where licence_number   = @id", connection);
+
+
+        command.Parameters.AddWithValue("@id", lic);
+
+        await connection.OpenAsync();
+
+        using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) == 1)
+                    return true;
+
+
+            }
+        }
+
+
+
+        return false;
+
+    }
+
+    public async Task<Boolean> does_item_exists(string name)
+    {
+
+        await using SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default"));
+        await using SqlCommand command = new SqlCommand("select count(*) from Product where name = @id", connection);
+
+
+        command.Parameters.AddWithValue("@id", name);
+
+        await connection.OpenAsync();
+
+        using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) == 1)
+                    return true;
+
+
+            }
+        }
+
+
+
+        return false;
+
+    }
+
+    public async Task addItem(Delivery_add delivery_Add)
+    {
+
+        await using SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("Default"));
+        await using SqlCommand command = new SqlCommand("INSERT INTO  Delivery Values(@did,@cid,(select driver_id from Driver where licence_number = @dli),@dt) ", connection);
+
+
+        command.Parameters.AddWithValue("@did", delivery_Add.deliveryId);
+
+        command.Parameters.AddWithValue("@cid", delivery_Add.customerId);
+
+        command.Parameters.AddWithValue("@dli", delivery_Add.licenceNumber);
+
+        command.Parameters.AddWithValue("@dt", DateTime.Now);
+
+        await connection.OpenAsync();
+
+        await command.ExecuteNonQueryAsync();
+
+
+
+        
+
+
+
+        command.CommandText = "INSERT INTO  Product_Delivery Values((select p.product_id from Product p where p.name  = @pname),@did,@am)";
+
+
+        foreach (Product p in delivery_Add.products)
+        {
+            command.Parameters.Clear();
+            command.Parameters.AddWithValue("@pname", p.name);
+            command.Parameters.AddWithValue("@did", delivery_Add.deliveryId);
+            command.Parameters.AddWithValue("@am", p.amount);
+
+            await command.ExecuteNonQueryAsync();
+
+
+        }
 
 
     }
