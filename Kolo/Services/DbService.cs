@@ -164,12 +164,13 @@ public class DbService : IDbService
         {
             while (await reader.ReadAsync())
             {
-                Product p = new Product();
-                p.name = reader.GetString(0);
+                Product p = new Product()
+                {
+                    name = reader.GetString(0),
 
-                p.Price = (double)reader.GetDecimal(1);
-                p.amount = reader.GetInt32(2);
-
+                    Price = (double)reader.GetDecimal(1),
+                    amount = reader.GetInt32(2)
+                };
                 products.Add(p);
 
             }
