@@ -51,7 +51,7 @@ namespace Kolo.Controllers
         public async Task<IActionResult> addItem(Delivery_add delivery_Add)
         {
             if (await _dbservice.does_del_exists(delivery_Add.deliveryId))
-                return NotFound("such delivery exists");
+                return BadRequest("such delivery exists");
 
              if (!await _dbservice.does_cus_exists(delivery_Add.customerId))
                 return NotFound("customer not exists");
@@ -73,7 +73,7 @@ namespace Kolo.Controllers
             await _dbservice.addItem(delivery_Add);
 
 
-            return Ok();
+            return Created();
         }
 
 
